@@ -10,7 +10,7 @@ villes_maroc = ['agadir', 'al_hoceima', 'asilah', 'azemmour', 'azilal', 'azrou',
 villes = []
 for ville in villes_maroc:
     villes.append(ville.capitalize())
-st.set_page_config(page_title="ImmoCRM", layout="wide")
+st.set_page_config(page_title="ImmoCRM-Annonces", layout="wide")
 st.title("🏘️ Agence Immobilière - Annonces Form")
 
 with st.form(key = 'user_form'):
