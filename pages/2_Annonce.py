@@ -3,17 +3,18 @@ import json
 from pymongo import MongoClient
 import datetime
 
+# 1. Connexion
+client = MongoClient("mongodb://localhost:27017/")
+db = client['immobilier_db']
+annonce = db["annonces"]
+
+
 # --- SECURITE AGENT ---
 if not st.session_state.get('logged_in', False):
     st.error("⛔ Zone Réservée aux Agents !")
     st.write("Veuillez vous connecter sur la page d'accueil.")
     st.stop() 
 # ----------------------
-
-# 1. Connexion
-client = MongoClient("mongodb://localhost:27017/")
-db = client['immobilier_db']
-annonce = db["annonces"]
 
 
 villes_maroc = ['agadir', 'al_hoceima', 'asilah', 'azemmour', 'azilal', 'azrou', 'beni_mellal', 'benslimane', 'berkane', 'berrechid', 'boujdour', 'bouznika', 'casablanca', 'chefchaouen', 'dakhla', 'el_hajeb', 'el_jadida', 'el_kelaa_des_sraghna', 'errachidia', 'essaouira', 'es_semara', 'fes', 'fnideq', 'fqih_ben_salah', 'guelmim', 'guercif', 'ifrane', 'inezgane', 'jerada', 'kenitra', 'khemisset', 'khenifra', 'khouribga', 'ksar_el_kebir', 'laayoune', 'larache', 'marrakech', 'martil', 'mdiq', 'meknes', 'midelt', 'mohammedia', 'nador', 'ouarzazate', 'ouazzane', 'oujda', 'rabat', 'safi', 'sale', 'sefrou', 'settat', 'sidi_bennour', 'sidi_ifni', 'sidi_kacem', 'sidi_slimane', 'skhirat', 'souk_el_arbaa', 'tanger', 'tan_tan', 'taounate', 'taroudant', 'tata', 'taza', 'temara', 'tetouan', 'tinghir', 'tiznit', 'youssoufia', 'zagora']

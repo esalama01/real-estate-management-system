@@ -31,7 +31,10 @@ for prospect in prospects_list:
 prospect_nom = list(dict_prospect.keys())
 
 nom_choisi = st.selectbox("Nom de visiteur", prospect_nom)
-prospect_id_choisi = dict_prospect[nom_choisi]
+if nom_choisi is not None:
+    prospect_id_choisi = dict_prospect[nom_choisi]
+else:
+    st.warning("Veuillez choisir un prospect")
 
 #-----------------
 annonces_list = db["annonces"].find({}, {"titre": 1, "_id": 1})
@@ -44,7 +47,10 @@ for annonce in annonces_list:
 annonces_titres = list(dict_annonces.keys())
 
 annonce_choisi = st.selectbox("Titre d'annonce", annonces_titres)
-annonce_id_choisi = dict_annonces[annonce_choisi]
+if annonce_choisi is not None:
+    annonce_id_choisi = dict_annonces[annonce_choisi]
+else:
+    st.warning("Veuillez choisir une annonce")
 
 with st.form(key = 'visits_form'):
     date_visite = st.date_input("Date de visite", datetime.date.today())

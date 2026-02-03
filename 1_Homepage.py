@@ -41,4 +41,24 @@ with st.sidebar:
 st.title("🏡 Bienvenue chez Immo-Ecom")
 st.write("Découvrez nos dernières offres.")
 
+st.write("---")
+recent_ads = list(db.annonces.find().sort("_id", -1).limit(20))
+if recent_ads:
+    cols = st.columns(3)
+    
+    for index, ad in enumerate(recent_ads):
+        with cols[index % 3]: 
+            with st.container(border=True):
+                st.header("🏠")
+                
+                st.subheader(ad.get('type_recherche', 'Bien Immobilier'))
+                st.write(f"📍 **{ad.get('ville', '-')}**")
+                
+                prix = ad.get('prix', 0)
+                st.markdown(f"### 💰 {prix:,} DH")
+                
+                st.button("Voir détails", key=f"home_btn_{ad['_id']}")
+else:
+    st.info("Aucune annonce disponible pour le moment.")
+
 st.sidebar.success("Select a page above.")
