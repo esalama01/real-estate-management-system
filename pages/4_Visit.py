@@ -3,6 +3,14 @@ import json
 from pymongo import MongoClient
 import datetime
 
+# --- SECURITE AGENT ---
+if not st.session_state.get('logged_in', False):
+    st.error("⛔ Zone Réservée aux Agents !")
+    st.write("Veuillez vous connecter sur la page d'accueil.")
+    st.stop() 
+# ----------------------
+
+
 # 1. Connexion
 client = MongoClient("mongodb://localhost:27017/")
 db = client['immobilier_db']
