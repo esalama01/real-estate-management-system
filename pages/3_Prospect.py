@@ -8,7 +8,7 @@ db = client['immobilier_db']
 prospect = db["prospects"]
 
 st.set_page_config(page_title = "ImmoCRM-Prospects", layout = "wide")
-st.title("🏘️ Agence Immobilière - Prospect Form")
+st.write("# Devenir Un Client")
 
 villes_maroc = ['agadir', 'al_hoceima', 'asilah', 'azemmour', 'azilal', 'azrou', 'beni_mellal', 'benslimane', 'berkane', 'berrechid', 'boujdour', 'bouznika', 'casablanca', 'chefchaouen', 'dakhla', 'el_hajeb', 'el_jadida', 'el_kelaa_des_sraghna', 'errachidia', 'essaouira', 'es_semara', 'fes', 'fnideq', 'fqih_ben_salah', 'guelmim', 'guercif', 'ifrane', 'inezgane', 'jerada', 'kenitra', 'khemisset', 'khenifra', 'khouribga', 'ksar_el_kebir', 'laayoune', 'larache', 'marrakech', 'martil', 'mdiq', 'meknes', 'midelt', 'mohammedia', 'nador', 'ouarzazate', 'ouazzane', 'oujda', 'rabat', 'safi', 'sale', 'sefrou', 'settat', 'sidi_bennour', 'sidi_ifni', 'sidi_kacem', 'sidi_slimane', 'skhirat', 'souk_el_arbaa', 'tanger', 'tan_tan', 'taounate', 'taroudant', 'tata', 'taza', 'temara', 'tetouan', 'tinghir', 'tiznit', 'youssoufia', 'zagora']
 villes = []

@@ -20,6 +20,8 @@ type = st.selectbox("Type",["Villa","Appartement", "Boutique"])
 
 with st.form(key = 'user_form'):
     #id_annonce = st.number_input("id") i ll let mongodb generate it
+    
+    titre = st.text_input("Titre")
     piscine = False
     etage = 0
     if type == "Villa":
@@ -38,6 +40,7 @@ with st.form(key = 'user_form'):
 if submit_button:
     #print("hola")
     nouvel_annonce = {
+        "titre": titre,
         "prix": prix,
         "type_recherche": type, 
         "surface": surface,
