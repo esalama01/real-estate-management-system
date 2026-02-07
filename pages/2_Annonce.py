@@ -45,6 +45,7 @@ with st.form(key = 'user_form'):
     statut = st.selectbox("Statut", ["Disponible","Vendue","Louée"])
     prix = st.number_input("Prix", min_value = 0)
     submit_button = st.form_submit_button(label='Submit')
+    image_url = st.text_input("L'url d'image")
 if submit_button:
     #print("hola")
     nouvel_annonce = {
@@ -55,7 +56,8 @@ if submit_button:
         "statut" : statut,
         "quartier": quartier,
         "ville": ville,
-        "date_d'Ajout": datetime.datetime.now()
+        "date_d'Ajout": datetime.datetime.now(),
+        "img_url" : image_url 
     }
     if type == "Villa":
         nouvel_annonce["piscine"] = piscine

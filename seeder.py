@@ -1,73 +1,97 @@
 import random
+import http.client
+import json
+import urllib.parse
 from faker import Faker
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 
-# Configuration & Connexion
+# --- 1. CONFIGURATION & CONNEXION ---
 fake = Faker('fr_FR')
 client = MongoClient("mongodb://localhost:27017/")
 db = client['immobilier_db']
 
-# Suppression des anciennes données (Optionnel - décommenter si besoin)
-# db.annonces.delete_many({})
-# db.prospects.delete_many({})
-# db.visites.delete_many({})
-# db.users.delete_many({})
-
-print("--- 🚀 Démarrage de la génération de données ---")
-
-# Listes de données
-villes_maroc = ['Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Agadir', 'Fes', 'Meknes', 'Oujda', 'Kenitra', 'Tetouan']
-quartiers = ['Maarif', 'Gueliz', 'Hay Riad', 'Centre Ville', 'Hay Mohammadi', 'Ocean', 'Agdal', 'California']
-
-# ==========================================
-# 1. GÉNÉRATION DES ANNONCES 🏠
-# ==========================================
-print("Génération des annonces...")
-types_biens = ["Appartement", "Villa", "Boutique", "Terrain"]
-annonces_ids = [] 
-
-for _ in range(50):
-    type_choisi = random.choice(types_biens)
-    ville = random.choice(villes_maroc)
-    quartier = random.choice(quartiers)
+def get_sarouty_data(limit=50):
+    print(f"⏳ Récupération de {limit} annonces réelles depuis Sarouty...")
+    HOST = "b2c-be-prod.api.sarouty.ma"
+    BASE_PATH = "/api/properties"
     
-    # Logique de Prix & Surface
-    if type_choisi == "Villa":
-        prix = random.randint(2000000, 15000000)
-        surface = random.randint(200, 1000)
-    elif type_choisi == "Appartement":
-        prix = random.randint(300000, 2500000)
-        surface = random.randint(50, 200)
+    filters = [{"field": "buy_or_rent", "operator": "eq", "value": 1}]
+    filter_str = urllib.parse.quote(json.dumps(filters[0]))
+    full_path = f"{BASE_PATH}?limit={limit}&page=1&filters={filter_str}"
+    
+    conn = http.client.HTTPSConnection(HOST)
+    headers = { 'User-Agent': "insomnia/10.3.0" }
+    
+    try:
+        conn.request("GET", full_path, "", headers)
+        res = conn.getresponse()
+        raw_data = json.loads(res.read().decode("utf-8"))
+        
+        # FIX dial KeyError: N-qalbou fin kayna l-list dyal l-i3lanat
+        data_content = raw_data.get('data', {})
+        if isinstance(data_content, list):
+            return data_content
+        if isinstance(data_content, dict):
+            # Qeleb wast 'items' aw 'data' dakhlaniya
+            return data_content.get('items', data_content.get('data', []))
+        return []
+    except Exception as e:
+        print(f"⚠️ Erreur Scraping: {e}")
+        return []
+
+print("\n--- 🚀 Démarrage du Seeder Complet ---")
+
+# Nettoyage des anciennes données
+db.annonces.delete_many({})
+db.prospects.delete_many({})
+db.visites.delete_many({})
+
+# ==========================================
+# 1. GÉNÉRATION DES ANNONCES (REAL DATA)
+# ==========================================
+real_ads = get_sarouty_data(50)
+annonces_ids = []
+
+for i in range(50):
+    if i < len(real_ads):
+        item = real_ads[i]
+        images = item.get('images', [])
+        img_url = images[0].get('property_image_url', '') if images else ""
+        type_choisi = item.get('property_type_fr', 'Appartement')
+        prix = item.get('price', random.randint(500000, 2000000))
+        ville = item.get('location_name', 'Maroc')
+        quartier = f"Quartier {fake.city_suffix()}"
     else:
-        prix = random.randint(100000, 5000000)
-        surface = random.randint(20, 500)
+        # Fallback fake
+        type_choisi = random.choice(["Appartement", "Villa"])
+        img_url = "https://via.placeholder.com/400x300?text=Immobilier"
+        prix = random.randint(500000, 3000000)
+        ville = random.choice(['Casablanca', 'Rabat', 'Tanger'])
+        quartier = fake.street_name()
 
     annonce = {
-        "titre": f"{type_choisi} {random.choice(['Spacieux', 'Moderne', 'Luxueux', 'Coquet'])} à {quartier}",
+        "titre": f"{type_choisi} {random.choice(['Spacieux', 'Moderne', 'Luxueux'])} à {ville}",
         "prix": prix,
         "type_recherche": type_choisi, 
-        "surface": surface,
+        "surface": random.randint(60, 400),
         "statut": random.choice(["Disponible", "Vendue", "Louée"]),
         "quartier": quartier,
         "ville": ville,
+        "img_url": img_url,
         "date_d'Ajout": datetime.now() - timedelta(days=random.randint(0, 365))
     }
 
-    if type_choisi == "Villa":
-        annonce["piscine"] = random.choice([True, False])
-    if type_choisi == "Appartement":
-        annonce["etage"] = random.randint(1, 10)
-
     res = db.annonces.insert_one(annonce)
     annonces_ids.append({"_id": res.inserted_id, "titre": annonce["titre"]})
+
+print(f"✅ {len(annonces_ids)} Annonces insérées.")
 
 # ==========================================
 # 2. GÉNÉRATION DES PROSPECTS 👤
 # ==========================================
 print("Génération des prospects...")
 prospects_ids = []
-
 for _ in range(50):
     nom = fake.last_name()
     prenom = fake.first_name()
@@ -75,14 +99,11 @@ for _ in range(50):
     prospect = {
         "nom": nom,
         "prenom": prenom,
-        "date_naissance": str(fake.date_of_birth(minimum_age=25, maximum_age=70)),
         "telephone": f"06{random.randint(10000000, 99999999)}",
         "email": f"{prenom.lower()}.{nom.lower()}@gmail.com",
         "budget": random.randint(500000, 5000000),
-        "type_recherche": random.choice(types_biens),
-        "surface_min": random.randint(50, 200),
-        "quartier_prefere": random.choice(quartiers),
-        "ville": random.choice(villes_maroc),
+        "type_recherche": random.choice(["Appartement", "Villa", "Boutique"]),
+        "ville": random.choice(['Casablanca', 'Rabat', 'Marrakech', 'Tanger']),
         "date_inscription": datetime.now() - timedelta(days=random.randint(0, 30))
     }
     
@@ -93,19 +114,18 @@ for _ in range(50):
 # 3. GÉNÉRATION DES VISITES 🤝
 # ==========================================
 print("Génération des visites...")
-
 if annonces_ids and prospects_ids:
     for _ in range(100):
-        rand_annonce = random.choice(annonces_ids)
-        rand_prospect = random.choice(prospects_ids)
+        rand_ann = random.choice(annonces_ids)
+        rand_pros = random.choice(prospects_ids)
         
         visite = {
-            "id_prospect": rand_prospect["_id"],
-            "nom_prospect": rand_prospect["nom"],
-            "id_annonce": rand_annonce["_id"],
-            "titre_annonce": rand_annonce["titre"],
+            "id_prospect": rand_pros["_id"],
+            "nom_prospect": rand_pros["nom"],
+            "id_annonce": rand_ann["_id"],
+            "titre_annonce": rand_ann["titre"],
             "date": str(fake.date_between(start_date='-1y', end_date='today')),
-            "commentaire": fake.sentence(nb_words=10),
+            "commentaire": fake.sentence(nb_words=8),
             "statut": random.choice(["En attente", "Intéressé", "Offre faite", "Pas intéressé"])
         }
         db.visites.insert_one(visite)
@@ -116,10 +136,10 @@ if annonces_ids and prospects_ids:
 if not db.users.find_one({"username": "agent1"}):
     db.users.insert_one({
         "username": "agent1",
-        "password": "1234",
-        "nom": "Agent Super",
+        "password": "123",
+        "nom": "Agent Immobilier",
         "role": "agent"
     })
-    print("✅ Utilisateur 'agent1' créé (Mot de passe : 1234)")
+    print("✅ Utilisateur 'agent1' créé.")
 
-print("\n🎉 TERMINÉ ! Données générées avec succès.")
+print("\n🎉 TERMINÉ ! D-data dial Sarouty + Prospects + Visites m-sttfin f MongoDB.")
